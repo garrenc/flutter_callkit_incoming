@@ -8,5 +8,7 @@ build/
 
 pubspec.lock
 
+.history
+
 example/ios/Podfile.lock
 example/pubspec.lock
