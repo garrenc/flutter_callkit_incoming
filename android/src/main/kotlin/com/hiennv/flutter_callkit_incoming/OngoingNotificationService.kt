@@ -37,7 +37,12 @@ class OngoingNotificationService : Service() {
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        showOngoingCallNotification(intent?.extras!!)
+        val extras = intent?.extras
+        if (extras != null) {
+            showOngoingCallNotification(extras)
+        } else {
+            stopSelf()
+        }
         return START_STICKY
     }
 
