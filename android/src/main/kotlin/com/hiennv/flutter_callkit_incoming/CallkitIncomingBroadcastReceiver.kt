@@ -101,6 +101,7 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
         val callkitNotificationManager = CallkitNotificationManager(context)
         val action = intent.action ?: return
         val data = intent.extras?.getBundle(CallkitConstants.EXTRA_CALLKIT_INCOMING_DATA) ?: return
+        
         when (action) {
             "${context.packageName}.${CallkitConstants.ACTION_CALL_INCOMING}" -> {
                 try {
@@ -159,6 +160,9 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data, false)
                     removeCall(context, Data.fromBundle(data))
+                    
+                    // Close the activity using static method
+                    CallkitIncomingActivity.finishActivity()
                 } catch (error: Exception) {
                     Log.e(TAG, null, error)
                 }
@@ -171,6 +175,9 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data, false)
                     removeCall(context, Data.fromBundle(data))
+                    
+                    // Close the activity using static method
+                    CallkitIncomingActivity.finishActivity()
                 } catch (error: Exception) {
                     Log.e(TAG, null, error)
                 }

@@ -38,6 +38,14 @@ class CallkitIncomingActivity : Activity() {
 
         private const val ACTION_ENDED_CALL_INCOMING =
             "com.hiennv.flutter_callkit_incoming.ACTION_ENDED_CALL_INCOMING"
+        
+        @JvmStatic
+        private var currentActivity: CallkitIncomingActivity? = null
+        
+        @JvmStatic
+        fun finishActivity() {
+            currentActivity?.finishTask()
+        }
 
         fun getIntent(context: Context, data: Bundle) =
             Intent(CallkitConstants.ACTION_CALL_INCOMING).apply {
@@ -49,7 +57,8 @@ class CallkitIncomingActivity : Activity() {
             }
 
         fun getIntentEnded(context: Context, isAccepted: Boolean): Intent {
-            val intent = Intent("${context.packageName}.${ACTION_ENDED_CALL_INCOMING}")
+            val action = "${context.packageName}.${ACTION_ENDED_CALL_INCOMING}"
+            val intent = Intent(action)
             intent.putExtra("ACCEPTED", isAccepted)
             intent.setPackage(context.packageName)
             intent.setClassName(
@@ -93,6 +102,10 @@ class CallkitIncomingActivity : Activity() {
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Set current activity reference
+        currentActivity = this
+        
         requestedOrientation = if (!Utils.isTablet(this@CallkitIncomingActivity)) {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         } else {
@@ -380,7 +393,16 @@ class CallkitIncomingActivity : Activity() {
     }
 
     override fun onDestroy() {
-        unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
+        // Clear current activity reference
+        if (currentActivity == this) {
+            currentActivity = null
+        }
+        
+        try {
+            unregisterReceiver(endedCallkitIncomingBroadcastReceiver)
+        } catch (e: Exception) {
+            // Receiver might not be registered
+        }
         super.onDestroy()
     }
 
