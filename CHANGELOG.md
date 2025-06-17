@@ -1,3 +1,11 @@
+## 2.5.5
+
+Fixed end of intent on android
+
+## 2.5.4
+
+Fixed null check on ongoingActivityEnd
+
 ## 2.5.3
 
 - Fixed android 14+ compatibility
