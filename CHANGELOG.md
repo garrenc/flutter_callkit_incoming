@@ -1,3 +1,7 @@
+## 2.5.6
+
+Fixed showWhenLocked issue (app asking for password)
+
 ## 2.5.5
 
 Fixed end of intent on android
