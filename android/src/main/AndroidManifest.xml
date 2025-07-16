@@ -30,7 +30,11 @@
         <activity
             android:exported="false"
             android:theme="@style/TranslucentTheme"
-            android:name="com.hiennv.flutter_callkit_incoming.TransparentActivity"/>
+            android:name="com.hiennv.flutter_callkit_incoming.TransparentActivity"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:turnScreenOn="true"
+            android:launchMode="singleInstance"/>
 
         <receiver
             android:name="com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver"
