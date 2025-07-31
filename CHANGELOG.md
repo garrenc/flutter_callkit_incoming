@@ -1,3 +1,7 @@
+## 2.5.7
+
+Ignore keyguard dismiss
+
 ## 2.5.6
 
 Fixed showWhenLocked issue (app asking for password)

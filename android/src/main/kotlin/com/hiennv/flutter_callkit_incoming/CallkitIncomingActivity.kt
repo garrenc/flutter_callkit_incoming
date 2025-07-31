@@ -344,7 +344,8 @@ class CallkitIncomingActivity : Activity() {
             TransparentActivity.getIntent(this, CallkitConstants.ACTION_CALL_ACCEPT, data)
         startActivity(acceptIntent)
 
-        dismissKeyguard()
+        // Dont dismiss keygurad
+        //dismissKeyguard()
         finish()
     }
 
