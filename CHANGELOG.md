@@ -1,3 +1,7 @@
+## 2.5.8
+
+Add missing foreground service permissions
+
 ## 2.5.7
 
 Ignore keyguard dismiss
