@@ -5,26 +5,26 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 
 class TransparentActivity : Activity() {
 
     companion object {
         private const val TAG = "TransparentActivity"
-        
+
         fun getIntent(context: Context, action: String, data: Bundle?): Intent {
             Log.d(TAG, "getIntent: Creating TransparentActivity intent with action=$action")
-            val intent = Intent(context, TransparentActivity::class.java)
-            intent.action = action
-            intent.putExtra("data", data)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            return intent
+            return Intent(context, TransparentActivity::class.java).apply {
+                this.action = action
+                putExtra("data", data)
+                addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
         }
     }
-
 
     override fun onStart() {
         super.onStart()
@@ -36,33 +36,44 @@ class TransparentActivity : Activity() {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "onCreate: TransparentActivity started")
 
-        // Set window flags to show when locked, similar to CallkitIncomingActivity
+        // Window flags for lock screen display
         Log.d(TAG, "onCreate: Setting window flags for lock screen display")
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
-            Log.d(TAG, "onCreate: Android O_MR1+: Setting setShowWhenLocked(true)")
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             setTurnScreenOn(true)
             setShowWhenLocked(true)
         } else {
-            Log.d(TAG, "onCreate: Pre-O_MR1: Setting FLAG_SHOW_WHEN_LOCKED and FLAG_DISMISS_KEYGUARD")
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON)
+            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
+            window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
         }
 
-        val data = intent.getBundleExtra("data")
-        Log.d(TAG, "onCreate: Action=${intent.action}, data=${data != null}")
+        val data: Bundle? = intent?.getBundleExtra("data")
+        val action: String = intent?.action ?: run {
+            // Action is missing – nothing to do. Avoid NPE and exit gracefully.
+            Log.e(TAG, "onCreate: Missing intent.action, finishing to avoid crash")
+            finish()
+            overridePendingTransition(0, 0)
+            return
+        }
 
+        Log.d(TAG, "onCreate: Action=$action, data=${data != null}")
+
+        // Send broadcast safely
         Log.d(TAG, "onCreate: Sending broadcast to CallkitIncomingBroadcastReceiver")
-        val broadcastIntent = CallkitIncomingBroadcastReceiver.getIntent(this, intent.action!!, data)
-        broadcastIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
-        sendBroadcast(broadcastIntent)
+        try {
+            val broadcastIntent = CallkitIncomingBroadcastReceiver.getIntent(this, action, data)
+            broadcastIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            sendBroadcast(broadcastIntent)
+        } catch (t: Throwable) {
+            Log.e(TAG, "onCreate: Failed to send broadcast", t)
+        }
 
+        // Bring app to foreground if possible
         Log.d(TAG, "onCreate: Getting main app intent from AppUtils")
-        val activityIntent = AppUtils.getAppIntent(this, intent.action, data)
+        val activityIntent = AppUtils.getAppIntent(this, action, data)
         Log.d(TAG, "onCreate: Main app intent=${activityIntent != null}")
-        
         if (activityIntent != null) {
             Log.d(TAG, "onCreate: Starting main app activity")
             startActivity(activityIntent)
