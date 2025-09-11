@@ -1,3 +1,7 @@
+## 2.5.9
+
+Add additional guards to TransparentActivity.kt
+
 ## 2.5.8
 
 Add missing foreground service permissions
