@@ -1,3 +1,7 @@
+## 2.5.10
+
+Revet camera permissions
+
 ## 2.5.9
 
 Add additional guards to TransparentActivity.kt
