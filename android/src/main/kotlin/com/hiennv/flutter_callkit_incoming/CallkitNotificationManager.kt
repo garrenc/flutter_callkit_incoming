@@ -18,8 +18,6 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.View
@@ -42,6 +40,8 @@ class CallkitNotificationManager(private val context: Context) {
         const val PERMISSION_NOTIFICATION_REQUEST_CODE = 6969
 
         const val EXTRA_TIME_START_CALL = "EXTRA_TIME_START_CALL"
+
+        private const val GRP_CALLS   = "grp_calls"
 
         private const val NOTIFICATION_CHANNEL_ID_INCOMING = "callkit_incoming_channel_id"
         const val NOTIFICATION_CHANNEL_ID_ONGOING = "callkit_ongoing_channel_id"
@@ -101,10 +101,8 @@ class CallkitNotificationManager(private val context: Context) {
         notificationBuilder.setAutoCancel(false)
         notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID_INCOMING)
         notificationBuilder.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            notificationBuilder.setCategory(NotificationCompat.CATEGORY_CALL)
-            notificationBuilder.priority = NotificationCompat.PRIORITY_MAX
-        }
+        notificationBuilder.setCategory(NotificationCompat.CATEGORY_CALL)
+        notificationBuilder.priority = NotificationCompat.PRIORITY_MAX
         notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         notificationBuilder.setOngoing(true)
         notificationBuilder.setWhen(0)
@@ -180,39 +178,21 @@ class CallkitNotificationManager(private val context: Context) {
                         .into(createAvatarTargetDefault(notificationId))
             }
             val caller = data.getString(CallkitConstants.EXTRA_CALLKIT_NAME_CALLER, "")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                val person = Person.Builder()
-                        .setName(caller)
-                        .setImportant(
-                                data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_IMPORTANT, false)
-                        )
-                        .setBot(data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_BOT, false))
-                        .build()
-                notificationBuilder.setStyle(
-                        NotificationCompat.CallStyle.forIncomingCall(
-                                person,
-                                getDeclinePendingIntent(notificationId, data),
-                                getAcceptPendingIntent(notificationId, data),
-                        )
-                                .setIsVideo(typeCall > 0)
-                )
-            } else {
-                notificationBuilder.setContentTitle(caller)
-                val textDecline = data.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_DECLINE, "")
-                val declineAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                        R.drawable.ic_decline,
-                        if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_decline) else textDecline,
-                        getDeclinePendingIntent(notificationId, data)
-                ).build()
-                notificationBuilder.addAction(declineAction)
-                val textAccept = data.getString(CallkitConstants.EXTRA_CALLKIT_TEXT_ACCEPT, "")
-                val acceptAction: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                        R.drawable.ic_accept,
-                        if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_accept) else textAccept,
-                        getAcceptPendingIntent(notificationId, data)
-                ).build()
-                notificationBuilder.addAction(acceptAction)
-            }
+            val person = Person.Builder()
+                    .setName(caller)
+                    .setImportant(
+                            data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_IMPORTANT, false)
+                    )
+                    .setBot(data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_BOT, false))
+                    .build()
+            notificationBuilder.setStyle(
+                    NotificationCompat.CallStyle.forIncomingCall(
+                            person,
+                            getDeclinePendingIntent(notificationId, data),
+                            getAcceptPendingIntent(notificationId, data),
+                    )
+                            .setIsVideo(typeCall > 0)
+            )
         }
         val notification = notificationBuilder.build()
         notification.flags = Notification.FLAG_INSISTENT
@@ -224,8 +204,8 @@ class CallkitNotificationManager(private val context: Context) {
                 R.id.tvNameCaller,
                 data.getString(CallkitConstants.EXTRA_CALLKIT_NAME_CALLER, "")
         )
-        val isShowCallID = data?.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_CALL_ID, false)
-        if (isShowCallID == true) {
+        val isShowCallID = data.getBoolean(CallkitConstants.EXTRA_CALLKIT_IS_SHOW_CALL_ID, false)
+        if (isShowCallID) {
             remoteViews.setTextViewText(
                     R.id.tvNumber,
                     data.getString(CallkitConstants.EXTRA_CALLKIT_HANDLE, "")
@@ -265,7 +245,7 @@ class CallkitNotificationManager(private val context: Context) {
                 CallkitConstants.EXTRA_CALLKIT_MISSED_CALL_ID,
                 data.getString(CallkitConstants.EXTRA_CALLKIT_ID, "callkit_incoming").hashCode() + 1
         )
-        createNotificationChanel(data);
+        createNotificationChanel(data)
         val missedCallSound: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val typeCall = data.getInt(CallkitConstants.EXTRA_CALLKIT_TYPE, -1)
         var smallIcon = context.applicationInfo.icon
@@ -278,10 +258,8 @@ class CallkitNotificationManager(private val context: Context) {
         }
         notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID_MISSED)
         notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID_MISSED)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                notificationBuilder.setCategory(Notification.CATEGORY_MISSED_CALL)
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            notificationBuilder.setCategory(Notification.CATEGORY_MISSED_CALL)
         }
         val textMissedCall = data.getString(CallkitConstants.EXTRA_CALLKIT_MISSED_CALL_SUBTITLE, "")
         notificationBuilder.setSubText(if (TextUtils.isEmpty(textMissedCall)) context.getString(R.string.text_missed_call) else textMissedCall)
@@ -374,11 +352,8 @@ class CallkitNotificationManager(private val context: Context) {
                 notificationBuilder.addAction(callbackAction)
             }
         }
-        notificationBuilder.priority = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            NotificationManager.IMPORTANCE_HIGH
-        } else {
-            Notification.PRIORITY_HIGH
-        }
+        notificationBuilder.priority =
+                NotificationManager.IMPORTANCE_HIGH
         notificationBuilder.setSound(missedCallSound)
         notificationBuilder.setContentIntent(getAppPendingIntent(missedNotificationId, data))
         val actionColor = data.getString(CallkitConstants.EXTRA_CALLKIT_ACTION_COLOR, "#4CAF50")
@@ -409,11 +384,7 @@ class CallkitNotificationManager(private val context: Context) {
     fun incomingChannelEnabled(): Boolean = getNotificationManager().run {
         val channel = getNotificationChannel(NOTIFICATION_CHANNEL_ID_INCOMING)
 
-        return areNotificationsEnabled() &&
-                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                        channel != null &&
-                        channel.importance > NotificationManagerCompat.IMPORTANCE_NONE) ||
-                Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+        return areNotificationsEnabled() && (channel != null && channel.importance > NotificationManagerCompat.IMPORTANCE_NONE)
     }
 
     public fun createNotificationChanel(data: Bundle) {
@@ -428,55 +399,59 @@ class CallkitNotificationManager(private val context: Context) {
         val ongoingCallChannelName = data.getString(
                 CallkitConstants.EXTRA_CALLKIT_ONGOING_CALL_NOTIFICATION_CHANNEL_NAME,
                 "Ongoing Call"
-        );
+        )
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            getNotificationManager().apply {
-                var channelCall = getNotificationChannel(NOTIFICATION_CHANNEL_ID_INCOMING)
-                if (channelCall != null) {
-                    channelCall.setSound(null, null)
-                } else {
-                    channelCall = NotificationChannel(
-                            NOTIFICATION_CHANNEL_ID_INCOMING,
-                            incomingCallChannelName,
-                            NotificationManager.IMPORTANCE_HIGH
-                    ).apply {
-                        description = ""
-                        vibrationPattern =
-                                longArrayOf(0, 1000, 500, 1000, 500)
-                        lightColor = Color.RED
-                        enableLights(true)
-                        enableVibration(true)
-                        setSound(null, null)
-                    }
-                }
-                channelCall.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        getNotificationManager().apply {
+            var channelCall = getNotificationChannel(NOTIFICATION_CHANNEL_ID_INCOMING)
 
-                channelCall.importance = NotificationManager.IMPORTANCE_HIGH
-
-                createNotificationChannel(channelCall)
-
-                val channelMissedCall = NotificationChannel(
-                        NOTIFICATION_CHANNEL_ID_MISSED,
-                        missedCallChannelName,
-                        NotificationManager.IMPORTANCE_DEFAULT
+            if (getNotificationChannelGroup(GRP_CALLS) == null) {
+               createNotificationChannelGroup(
+                        android.app.NotificationChannelGroup(GRP_CALLS, "Calls")
+                )
+            }
+            if (channelCall != null) {
+                channelCall.setSound(null, null)
+            } else {
+                channelCall = NotificationChannel(
+                        NOTIFICATION_CHANNEL_ID_INCOMING,
+                        incomingCallChannelName,
+                        NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = ""
-                    vibrationPattern = longArrayOf(0, 1000)
+                    group = GRP_CALLS
+                    vibrationPattern =
+                            longArrayOf(0, 1000, 500, 1000, 500)
+
                     lightColor = Color.RED
                     enableLights(true)
                     enableVibration(true)
+                    lockscreenVisibility = Notification.VISIBILITY_SECRET
+                    setSound(null, null)
                 }
-                channelMissedCall.importance = NotificationManager.IMPORTANCE_DEFAULT
-                createNotificationChannel(channelMissedCall)
-
-                val channelOngoingCall = NotificationChannel(
-                        NOTIFICATION_CHANNEL_ID_ONGOING,
-                        ongoingCallChannelName,
-                        NotificationManager.IMPORTANCE_LOW // disables notification popup for ongoing call
-                )
-                createNotificationChannel(channelOngoingCall)
             }
+
+            createNotificationChannel(channelCall)
+
+            val channelMissedCall = NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID_MISSED,
+                    missedCallChannelName,
+                    NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = ""
+                vibrationPattern = longArrayOf(0, 1000)
+                lightColor = Color.RED
+                enableLights(true)
+                enableVibration(true)
+            }
+            channelMissedCall.importance = NotificationManager.IMPORTANCE_DEFAULT
+            createNotificationChannel(channelMissedCall)
+
+            val channelOngoingCall = NotificationChannel(
+                    NOTIFICATION_CHANNEL_ID_ONGOING,
+                    ongoingCallChannelName,
+                    NotificationManager.IMPORTANCE_LOW // disables notification popup for ongoing call
+            )
+            createNotificationChannel(channelOngoingCall)
         }
     }
 
@@ -524,11 +499,7 @@ class CallkitNotificationManager(private val context: Context) {
     }
 
     private fun getFlagPendingIntent(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
-        }
+        return PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     }
 
 

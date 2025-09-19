@@ -27,7 +27,7 @@ class CallkitSoundPlayerService : Service() {
         this.prepare()
         this.playSound(intent)
         this.playVibrator()
-        return START_STICKY;
+        return START_STICKY
     }
 
     override fun onDestroy() {
@@ -60,16 +60,12 @@ class CallkitSoundPlayerService : Service() {
             }
 
             else -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator?.vibrate(
-                        VibrationEffect.createWaveform(
-                            longArrayOf(0L, 1000L, 1000L),
-                            0
-                        )
+                vibrator?.vibrate(
+                    VibrationEffect.createWaveform(
+                        longArrayOf(0L, 1000L, 1000L),
+                        0
                     )
-                } else {
-                    vibrator?.vibrate(longArrayOf(0L, 1000L, 1000L), 0)
-                }
+                )
             }
         }
     }
@@ -80,13 +76,13 @@ class CallkitSoundPlayerService : Service() {
             CallkitConstants.EXTRA_CALLKIT_RINGTONE_PATH,
             ""
         )
-        var uri = sound?.let { getRingtoneUri(it) }
+        val uri = sound?.let { getRingtoneUri(it) }
         if (uri == null) {
             // Failed to get ringtone url, can't play sound
             return
         }
         try {
-            mediaPlayer(uri!!)
+            mediaPlayer(uri)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -94,16 +90,12 @@ class CallkitSoundPlayerService : Service() {
 
     private fun mediaPlayer(uri: Uri) {
         mediaPlayer = MediaPlayer()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val attribution = AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                .setLegacyStreamType(AudioManager.STREAM_RING)
-                .build()
-            mediaPlayer?.setAudioAttributes(attribution)
-        } else {
-            mediaPlayer?.setAudioStreamType(AudioManager.STREAM_RING)
-        }
+        val attribution = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+            .setLegacyStreamType(AudioManager.STREAM_RING)
+            .build()
+        mediaPlayer?.setAudioAttributes(attribution)
         setDataSource(uri)
         mediaPlayer?.prepare()
         mediaPlayer?.isLooping = true
@@ -111,15 +103,12 @@ class CallkitSoundPlayerService : Service() {
     }
 
     private fun setDataSource(uri: Uri) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val assetFileDescriptor =
-                applicationContext.contentResolver.openAssetFileDescriptor(uri, "r")
-            if (assetFileDescriptor != null) {
-                mediaPlayer?.setDataSource(assetFileDescriptor)
-            }
-            return
+        val assetFileDescriptor =
+            applicationContext.contentResolver.openAssetFileDescriptor(uri, "r")
+        if (assetFileDescriptor != null) {
+            mediaPlayer?.setDataSource(assetFileDescriptor)
         }
-        mediaPlayer?.setDataSource(applicationContext, uri)
+        return
     }
 
     private fun getRingtoneUri(fileName: String): Uri? {
