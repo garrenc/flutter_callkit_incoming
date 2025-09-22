@@ -2,6 +2,8 @@ package com.hiennv.flutter_callkit_incoming
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.KeyguardManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -9,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.annotation.NonNull
+import androidx.core.app.NotificationManagerCompat
 import com.hiennv.flutter_callkit_incoming.Utils.Companion.reapCollection
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -153,6 +156,13 @@ class FlutterCallkitIncomingPlugin : FlutterPlugin, MethodCallHandler, ActivityA
                 "showCallkitIncoming" -> {
                     val data = Data(call.arguments() ?: HashMap())
                     data.from = "notification"
+                    // Workaround for a16 - because it groups notification on locked screen we need to cancel all notifications
+                    // TODO: in future replace these lines of code with ConnectionService/telecom logic and show full screen intent from onIncomingCall listener
+                    if (context != null && Build.VERSION.SDK_INT >= 36) {
+                        val nm = NotificationManagerCompat.from(context!!)
+                        nm.cancelAll()
+                    }
+
                     //send BroadcastReceiver
                     context?.sendBroadcast(
                         CallkitIncomingBroadcastReceiver.getIntentIncoming(

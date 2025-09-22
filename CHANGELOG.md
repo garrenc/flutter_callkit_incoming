@@ -1,3 +1,7 @@
+## 2.5.11
+
+Temporary fix for android 16
+
 ## 2.5.10
 
 Revet camera permissions
