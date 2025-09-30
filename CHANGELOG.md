@@ -1,3 +1,7 @@
+## 2.6.0
+
+Completely remove OngoingNotificationService
+
 ## 2.5.11
 
 Temporary fix for android 16

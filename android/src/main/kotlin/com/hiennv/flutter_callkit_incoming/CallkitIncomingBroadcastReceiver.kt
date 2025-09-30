@@ -124,12 +124,6 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                 try {
                     callkitNotificationManager.createNotificationChanel(data)
                     sendEventFlutter(CallkitConstants.ACTION_CALL_START, data)
-                    if (data.getBoolean(CallkitConstants.EXTRA_CALLKIT_CALLING_SHOW, true)) {
-                        val onGoingNotificationIntent =
-                                Intent(context, OngoingNotificationService::class.java);
-                        onGoingNotificationIntent.putExtras(data)
-                        context.startService(onGoingNotificationIntent)
-                    }
                     addCall(context, Data.fromBundle(data), true)
                 } catch (error: Exception) {
                     Log.e(TAG, null, error)
@@ -141,13 +135,6 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
                     sendEventFlutter(CallkitConstants.ACTION_CALL_ACCEPT, data)
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data, true)
-                    // show ongoing call when call is accepted
-                    if (data.getBoolean(CallkitConstants.EXTRA_CALLKIT_CALLING_SHOW, true)) {
-                        val onGoingNotificationIntent =
-                                Intent(context, OngoingNotificationService::class.java);
-                        onGoingNotificationIntent.putExtras(data)
-                        context.startService(onGoingNotificationIntent)
-                    }
                     addCall(context, Data.fromBundle(data), true)
                 } catch (error: Exception) {
                     Log.e(TAG, null, error)
@@ -171,7 +158,6 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
             "${context.packageName}.${CallkitConstants.ACTION_CALL_ENDED}" -> {
                 try {
                     sendEventFlutter(CallkitConstants.ACTION_CALL_ENDED, data)
-                    context.stopService(Intent(context, OngoingNotificationService::class.java))
                     context.stopService(Intent(context, CallkitSoundPlayerService::class.java))
                     callkitNotificationManager.clearIncomingNotification(data, false)
                     removeCall(context, Data.fromBundle(data))
